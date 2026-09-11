@@ -21,6 +21,7 @@ tf_http_archive(
 # Details: https://github.com/google-ml-infra/rules_ml_toolchain
 tf_http_archive(
     name = "rules_ml_toolchain",
+    patch_file = ["//third_party:rules_ml_toolchain_ppu.patch"],
     sha256 = "54c1a357f71f611efdb4891ebd4bcbe4aeb6dfa7e473f14fd7ecad5062096616",
     strip_prefix = "rules_ml_toolchain-d8cb9c2c168cd64000eaa6eda0781a9615a26ffe",
     urls = tf_mirror_urls(

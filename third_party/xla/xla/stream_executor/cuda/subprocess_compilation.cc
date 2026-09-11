@@ -299,6 +299,7 @@ absl::StatusOr<cuda::Assembly> CompileGpuAsmUsingPtxAs(
   std::vector<std::string> ptxas_args = {
       std::string{ptxas_path},
       ptx_path,
+      "--enable-ir-formatter",
       "-o",
       cubin_path,
       absl::StrCat("-arch=", cc.GetPtxAsTargetName(

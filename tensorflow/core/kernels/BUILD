@@ -4193,6 +4193,7 @@ tf_kernel_library(
         ":numeric_options_utils",
         "@xla//xla/stream_executor/cuda:cublas_plugin",
         "@xla//xla/stream_executor/cuda:cudnn_plugin",
+        "@xla//xla/stream_executor/gpu:gpu_asm_opts",
         "@xla//xla/stream_executor/integrations:tf_allocator_adapter",
         "//tensorflow/core/platform:stream_executor",
     ]) + if_cuda_or_rocm([

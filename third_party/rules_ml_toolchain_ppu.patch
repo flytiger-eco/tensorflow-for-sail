@@ -1,0 +1,59 @@
+diff -ruN --strip-trailing-cr a/cc/impls/linux_aarch64_linux_aarch64_cuda/wrappers/nvcc_wrapper b/cc/impls/linux_aarch64_linux_aarch64_cuda/wrappers/nvcc_wrapper
+--- a/cc/impls/linux_aarch64_linux_aarch64_cuda/wrappers/nvcc_wrapper
++++ b/cc/impls/linux_aarch64_linux_aarch64_cuda/wrappers/nvcc_wrapper
+@@ -116,6 +116,13 @@
+         opts += ' ' + arg
+       elif arg.startswith("'-isystem") and arg.endswith("'"):
+         opts += ' ' + arg[1:len(arg) - 1]
++      elif arg.startswith("'-") and arg.endswith("'"):
++        # A quoted flag (e.g. "'-include foo.h'") that the greedy -isystem
++        # parsing swallowed. Pass it through instead of treating it as a
++        # -isystem directory, which would leave a dangling -isystem.
++        opts += ' ' + arg[1:len(arg) - 1]
++      elif arg.startswith('-'):
++        opts += ' ' + arg
+       else:
+         opts += ' -isystem ' + arg
+   if args.g:
+diff -ruN --strip-trailing-cr a/cc/impls/linux_x86_64_linux_x86_64_cuda/wrappers/nvcc_wrapper b/cc/impls/linux_x86_64_linux_x86_64_cuda/wrappers/nvcc_wrapper
+--- a/cc/impls/linux_x86_64_linux_x86_64_cuda/wrappers/nvcc_wrapper
++++ b/cc/impls/linux_x86_64_linux_x86_64_cuda/wrappers/nvcc_wrapper
+@@ -116,6 +116,13 @@
+         opts += ' ' + arg
+       elif arg.startswith("'-isystem") and arg.endswith("'"):
+         opts += ' ' + arg[1:len(arg) - 1]
++      elif arg.startswith("'-") and arg.endswith("'"):
++        # A quoted flag (e.g. "'-include foo.h'") that the greedy -isystem
++        # parsing swallowed. Pass it through instead of treating it as a
++        # -isystem directory, which would leave a dangling -isystem.
++        opts += ' ' + arg[1:len(arg) - 1]
++      elif arg.startswith('-'):
++        opts += ' ' + arg
+       else:
+         opts += ' -isystem ' + arg
+   if args.g:
+diff -ruN --strip-trailing-cr a/gpu/cuda/cuda_redist_versions.bzl b/gpu/cuda/cuda_redist_versions.bzl
+--- a/gpu/cuda/cuda_redist_versions.bzl
++++ b/gpu/cuda/cuda_redist_versions.bzl
+@@ -714,7 +714,8 @@
+     },
+     "cuda_nvml_dev": {
+         "repo_name": "cuda_nvml",
+         "version_to_template": {
++            "1": "//gpu/cuda/build_templates:cuda_nvml.BUILD.tpl",
+             "13": "//gpu/cuda/build_templates:cuda_nvml.BUILD.tpl",
+             "12": "//gpu/cuda/build_templates:cuda_nvml.BUILD.tpl",
+             "11": "//gpu/cuda/build_templates:cuda_nvml.BUILD.tpl",
+diff -ruN --strip-trailing-cr a/third_party/rules_cc_toolchain/toolchain_config.bzl b/third_party/rules_cc_toolchain/toolchain_config.bzl
+--- a/third_party/rules_cc_toolchain/toolchain_config.bzl
++++ b/third_party/rules_cc_toolchain/toolchain_config.bzl
+@@ -528,6 +528,9 @@
+ def _cc_toolchain_config_impl(ctx):
+     return cc_common.create_cc_toolchain_config_info(
+         ctx = ctx,
++        cxx_builtin_include_directories = [
++            "/proc/self/cwd/external/cuda_nvcc",
++        ],
+         host_system_name = "local",
+         target_system_name = ctx.attr.target_system_name,
+         target_cpu = ctx.attr.target_cpu,
