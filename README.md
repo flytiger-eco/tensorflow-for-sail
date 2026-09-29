@@ -86,6 +86,7 @@ git submodule update --init --recursive
 
 # 4. Configure the PPU SDK and TensorFlow build.
 source /usr/local/PPU_SDK/envsetup.sh
+source /usr/local/pccl/envsetup.sh
 
 SDK_ROOT=/usr/local/PPU_SDK/CUDA_SDK
 CUDA_VER=12.8.0
@@ -108,7 +109,7 @@ export HERMETIC_CUDNN_VERSION="${CUDNN_VER}"
 export HERMETIC_CUDA_COMPUTE_CAPABILITIES=8.0
 export LOCAL_CUDA_PATH="${SDK_ROOT}"
 export LOCAL_CUDNN_PATH="${SDK_ROOT}"
-export LOCAL_NCCL_PATH="${SDK_ROOT}"
+export LOCAL_NCCL_PATH="${NCCL_HOME}"
 
 yes "" | ./configure
 
