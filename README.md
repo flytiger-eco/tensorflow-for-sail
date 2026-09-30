@@ -45,7 +45,7 @@ Zhenwu PPU devices.
 ## Build from Source
 
 Build TensorFlow-for-SAIL inside the SAIL Docker image. The commands below use
-`pkg.flytiger-eco.com/docker_release/ppu:v2.1.1-cuda12.8-ubuntu24-py312`.
+`pkg.flytiger-eco.com/docker_release/ppu:v2.2.0-cuda12.8-ubuntu24-py312`.
 
 ```bash
 # 1. Start the build container on a host with a Zhenwu PPU.
@@ -58,7 +58,7 @@ docker run -dit --name tensorflow-for-sail \
   --ulimit stack=67108864 \
   --device=/dev/alixpu_ctl \
   --network=host \
-  pkg.flytiger-eco.com/docker_release/ppu:v2.1.1-cuda12.8-ubuntu24-py312
+  pkg.flytiger-eco.com/docker_release/ppu:v2.2.0-cuda12.8-ubuntu24-py312
 
 docker exec -it tensorflow-for-sail /bin/bash
 ```
