@@ -1,0 +1,99 @@
+name: PPU Linux Build
+
+on:
+  pull_request:
+    branches:
+      - v2.21.0
+      - feature/for-ci-2210
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ppu-linux-large
+    timeout-minutes: 360
+    container:
+      image: pkg.flytiger-eco.com/docker_release/ppu:v2.1.1-cuda12.8-ubuntu24-py312
+    env:
+      PCCL_URL: https://pkg.flytiger-eco.com/artifactory/generic-local/NCCL/v2.2.0/nccl-2.27.3_ubuntu2404_sdk-v2.2.0.tar.gz
+    steps:
+      - name: Checkout v2.21.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        with:
+          ref: v2.21.0
+          submodules: recursive
+
+      - name: Build TensorFlow wheel for PPU
+        shell: bash
+        run: |
+          set -ex
+          apt-get update
+          apt-get install -y clang-18 lld-18 patchelf wget xxd
+
+          wget -O /usr/bin/bazel https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64
+          chmod +x /usr/bin/bazel
+
+          # Replace the pccl shipped in the image with the downloaded one.
+          PCCL_TMP="$(mktemp -d)"
+          wget -q -O "${PCCL_TMP}/pccl.tar.gz" "${PCCL_URL}"
+          tar -xzf "${PCCL_TMP}/pccl.tar.gz" -C "${PCCL_TMP}"
+          PCCL_ENVSETUP="$(find "${PCCL_TMP}" -maxdepth 3 -name envsetup.sh -print -quit)"
+          if [ -z "${PCCL_ENVSETUP}" ]; then
+            echo "envsetup.sh not found in ${PCCL_URL}" >&2
+            exit 1
+          fi
+          rm -rf /usr/local/pccl
+          mv "$(dirname "${PCCL_ENVSETUP}")" /usr/local/pccl
+          rm -rf "${PCCL_TMP}"
+
+          git submodule sync
+          git submodule update --init --recursive
+
+          source /usr/local/PPU_SDK/envsetup.sh
+          source /usr/local/pccl/envsetup.sh
+          SDK_ROOT=/usr/local/PPU_SDK/CUDA_SDK
+          CUDA_VER=12.8.0
+          CUDNN_VER=8.9.5
+          NCCL_VER=2.27.3
+
+          if [ ! -e "${SDK_ROOT}/lib" ]; then
+            ln -s targets/x86_64-linux/lib "${SDK_ROOT}/lib"
+          fi
+          cp -f "${SDK_ROOT}"/extras/CUPTI/include/*.h "${SDK_ROOT}/include/"
+          export TF_NEED_CUDA=1
+          export TF_CUDA_CLANG=0
+          export TF_NVCC_CLANG=1
+          export CUDA_NVCC=1
+          export TF_ENABLE_XLA=1
+
+          export HERMETIC_CUDA_VERSION="${CUDA_VER}"
+          export HERMETIC_CUDNN_VERSION="${CUDNN_VER}"
+          export HERMETIC_CUDA_COMPUTE_CAPABILITIES=8.0
+          export LOCAL_CUDA_PATH="${SDK_ROOT}"
+          export LOCAL_CUDNN_PATH="${SDK_ROOT}"
+          export LOCAL_NCCL_PATH="${NCCL_HOME}"
+          yes "" | ./configure
+          bazel build -s --verbose_failures \
+            --config=opt \
+            --config=cuda_nvcc \
+            --config=cuda_wheel \
+            --repo_env=CUDA_NVCC=1 \
+            --repo_env=HERMETIC_CUDA_VERSION="${CUDA_VER}" \
+            --repo_env=HERMETIC_CUDNN_VERSION="${CUDNN_VER}" \
+            --repo_env=HERMETIC_NCCL_VERSION="${NCCL_VER}" \
+            --repo_env=HERMETIC_CUDA_COMPUTE_CAPABILITIES=8.0 \
+            --repo_env=LOCAL_CUDA_PATH="${SDK_ROOT}" \
+            --repo_env=LOCAL_CUDNN_PATH="${SDK_ROOT}" \
+            --repo_env=LOCAL_NCCL_PATH="${NCCL_HOME}" \
+            --//tensorflow/core/kernels/mlir_generated:enable_gpu=False \
+            --copt=-Wno-error=unused-command-line-argument \
+            --copt=-Wno-gnu-offsetof-extensions \
+            --copt=-fclang-abi-compat=17 \
+            //tensorflow/python/kernel_tests/custom_ops:ackermann_op.so \
+            //tensorflow/python/kernel_tests/custom_ops:duplicate_op.so \
+            //tensorflow/tools/pip_package:wheel
