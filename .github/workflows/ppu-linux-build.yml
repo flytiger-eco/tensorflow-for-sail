@@ -4,6 +4,8 @@ on:
   pull_request:
     branches:
       - v2.21.0
+  push:
+    branches:
       - feature/for-ci-2210
 
 permissions:
