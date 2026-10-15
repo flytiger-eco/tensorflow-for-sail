@@ -24,8 +24,17 @@ jobs:
     env:
       PCCL_URL: https://pkg.flytiger-eco.com/artifactory/generic-local/NCCL/v2.2.0/nccl-2.27.3_ubuntu2404_sdk-v2.2.0.tar.gz
     steps:
+      # The container image ships without CA certificates, which breaks
+      # HTTPS access (git fetch, wget, bazel downloads).
+      - name: Install CA certificates
+        run: |
+          set -ex
+          apt-get update
+          apt-get install -y --no-install-recommends ca-certificates git
+          update-ca-certificates
+
       - name: Checkout v2.21.0
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        uses: actions/checkout@v4
         with:
           ref: v2.21.0
           submodules: recursive
