@@ -87,7 +87,9 @@ jobs:
           export LOCAL_CUDA_PATH="${SDK_ROOT}"
           export LOCAL_CUDNN_PATH="${SDK_ROOT}"
           export LOCAL_NCCL_PATH="${NCCL_HOME}"
-          yes "" | ./configure
+          # configure treats EOF as empty input (default answer). Avoid `yes | ...`:
+          # with pipefail, `yes` dies of SIGPIPE (exit 141) and aborts the step.
+          ./configure < /dev/null
           bazel build -s --verbose_failures \
             --config=opt \
             --config=cuda_nvcc \
