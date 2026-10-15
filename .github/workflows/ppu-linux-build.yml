@@ -99,7 +99,7 @@ jobs:
           export LOCAL_CUDA_PATH="${SDK_ROOT}"
           export LOCAL_CUDNN_PATH="${SDK_ROOT}"
           export LOCAL_NCCL_PATH="${NCCL_HOME}"
-          ./configure < /dev/null
+          yes "" | ./configure < /dev/null
           bazel build -s --verbose_failures \
             --config=opt \
             --config=cuda_nvcc \
