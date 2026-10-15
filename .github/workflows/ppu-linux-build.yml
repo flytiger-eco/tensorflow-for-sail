@@ -27,12 +27,6 @@ jobs:
       NODE_SELECTOR: "board-type=ZW-M890P"
       HOST_VOLUMES: "/nas_aisw:/nas_aisw,/wl_nas:/mnt/wl_nas"
     steps:
-      - name: Install CA certificates
-        run: |
-          set -ex
-          apt-get update
-          apt-get install -y --no-install-recommends ca-certificates git
-          update-ca-certificates
 
       - name: Checkout v2.21.0
         uses: actions/checkout@v4
