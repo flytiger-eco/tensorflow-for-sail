@@ -47,13 +47,12 @@ diff -ruN --strip-trailing-cr a/gpu/cuda/cuda_redist_versions.bzl b/gpu/cuda/cud
 diff -ruN --strip-trailing-cr a/third_party/rules_cc_toolchain/toolchain_config.bzl b/third_party/rules_cc_toolchain/toolchain_config.bzl
 --- a/third_party/rules_cc_toolchain/toolchain_config.bzl
 +++ b/third_party/rules_cc_toolchain/toolchain_config.bzl
-@@ -528,6 +528,10 @@
+@@ -528,6 +528,9 @@
  def _cc_toolchain_config_impl(ctx):
      return cc_common.create_cc_toolchain_config_info(
          ctx = ctx,
 +        cxx_builtin_include_directories = [
 +            "/proc/self/cwd/external/cuda_nvcc",
-+            "/proc/self/cwd/external/rules_ml_toolchain",
 +        ],
          host_system_name = "local",
          target_system_name = ctx.attr.target_system_name,
