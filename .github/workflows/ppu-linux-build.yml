@@ -59,6 +59,12 @@ jobs:
           timeout_minutes: 360
           command: |
             set -ex
+            # apt verifies signatures as the unprivileged _apt user, which
+            # needs a world-writable /tmp (missing/0755 in the pod image).
+            mkdir -p /tmp
+            chmod 1777 /tmp
+            PCCL_URL=https://pkg.flytiger-eco.com/artifactory/generic-local/NCCL/v2.2.0/nccl-2.27.3_ubuntu2404_sdk-v2.2.0.tar.gz
+
             apt-get update
             apt-get install -y clang-18 lld-18 patchelf wget xxd
 
