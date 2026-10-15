@@ -37,6 +37,21 @@ jobs:
           ref: v2.21.0
           submodules: recursive
 
+      # mirror.tensorflow.org no longer hosts this LLVM archive and GitHub has
+      # regenerated its tarball, so the pinned checksum no longer matches.
+      # Patch the checkout in CI only; repository sources stay untouched.
+      - name: Patch LLVM archive checksum
+        shell: bash
+        run: |
+          set -ex
+          LLVM_WS=third_party/xla/third_party/llvm/workspace.bzl
+          OLD_SHA=3f986184ee126677dbd77edb16d6b82c057ec869fefd7a9871979941e52e837a
+          NEW_SHA=00b1077e029fa57e6f2d9ac24936a49acf23ebc051b04f487131116258be6248
+          if grep -q "${OLD_SHA}" "${LLVM_WS}"; then
+            sed -i "s/${OLD_SHA}/${NEW_SHA}/" "${LLVM_WS}"
+          fi
+          grep -n LLVM_SHA256 "${LLVM_WS}"
+
       - name: Build TensorFlow wheel for PPU
         shell: bash
         run: |
@@ -87,8 +102,6 @@ jobs:
           export LOCAL_CUDA_PATH="${SDK_ROOT}"
           export LOCAL_CUDNN_PATH="${SDK_ROOT}"
           export LOCAL_NCCL_PATH="${NCCL_HOME}"
-          # configure treats EOF as empty input (default answer). Avoid `yes | ...`:
-          # with pipefail, `yes` dies of SIGPIPE (exit 141) and aborts the step.
           ./configure < /dev/null
           bazel build -s --verbose_failures \
             --config=opt \
