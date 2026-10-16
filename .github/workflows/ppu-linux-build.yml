@@ -34,6 +34,21 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           submodules: recursive
 
+      - name: Patch LLVM archive checksum
+        shell: bash
+        run: |
+          set -ex
+          # The pinned sha256 has no matching bytes anywhere (mirror.tensorflow.org
+          # 404s, GitHub regenerates the archive as 00b1077e...). Align the requested
+          # sha to the actually-downloadable file so --repository_cache can key/hit it.
+          LLVM_WS=third_party/xla/third_party/llvm/workspace.bzl
+          OLD_SHA=3f986184ee126677dbd77edb16d6b82c057ec869fefd7a9871979941e52e837a
+          NEW_SHA=00b1077e029fa57e6f2d9ac24936a49acf23ebc051b04f487131116258be6248
+          if grep -q "${OLD_SHA}" "${LLVM_WS}"; then
+            sed -i "s/${OLD_SHA}/${NEW_SHA}/" "${LLVM_WS}"
+          fi
+          grep -n LLVM_SHA256 "${LLVM_WS}"
+
       - name: "编译 wheel (890P, 1 PPU)"
         id: build
         uses: flytiger-eco/ppu-distributed-action@main
