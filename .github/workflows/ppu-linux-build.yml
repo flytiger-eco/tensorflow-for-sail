@@ -34,18 +34,6 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           submodules: recursive
 
-      # - name: Patch LLVM archive checksum
-      #   shell: bash
-      #   run: |
-      #     set -ex
-      #     LLVM_WS=third_party/xla/third_party/llvm/workspace.bzl
-      #     OLD_SHA=3f986184ee126677dbd77edb16d6b82c057ec869fefd7a9871979941e52e837a
-      #     NEW_SHA=00b1077e029fa57e6f2d9ac24936a49acf23ebc051b04f487131116258be6248
-      #     if grep -q "${OLD_SHA}" "${LLVM_WS}"; then
-      #       sed -i "s/${OLD_SHA}/${NEW_SHA}/" "${LLVM_WS}"
-      #     fi
-      #     grep -n LLVM_SHA256 "${LLVM_WS}"
-
       - name: "编译 wheel (890P, 1 PPU)"
         id: build
         uses: flytiger-eco/ppu-distributed-action@main
@@ -68,7 +56,13 @@ jobs:
             apt-get update
             apt-get install -y clang-18 lld-18 patchelf wget xxd
 
-            wget -O /usr/bin/bazel https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64
+            # Use the pre-populated Bazel cache on the NAS (mounted at
+            # /mnt/wl_nas) instead of downloading bazelisk and external repos.
+            # repository_cache is content-addressed by the pinned sha256, so a
+            # cache hit avoids the llvm-raw GitHub archive checksum drift.
+            BAZEL_CACHE=/mnt/wl_nas/cache/bazel
+            export BAZELISK_HOME=${BAZEL_CACHE}/bazelisk
+            cp ${BAZEL_CACHE}/bin/bazelisk-v1.29.0-linux-amd64 /usr/bin/bazel
             chmod +x /usr/bin/bazel
 
             # Replace the pccl shipped in the image with the downloaded one.
@@ -113,6 +107,7 @@ jobs:
             export LOCAL_NCCL_PATH="${NCCL_HOME}"
             yes "" | ./configure < /dev/null
             bazel build -s --verbose_failures \
+              --repository_cache=${BAZEL_CACHE}/repository_cache \
               --config=opt \
               --config=cuda_nvcc \
               --config=cuda_wheel \
