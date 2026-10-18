@@ -58,10 +58,6 @@ jobs:
 
             apt-get update
             apt-get install -y clang-18 lld-18 patchelf wget xxd
-
-            BAZEL_CACHE=/mnt/wl_nas/cache/bazel
-            export BAZELISK_HOME=${BAZEL_CACHE}/bazelisk
-            cp ${BAZEL_CACHE}/bin/bazelisk-v1.29.0-linux-amd64 /usr/bin/bazel
             
             chmod +x /usr/bin/bazel
             PCCL_TMP="$(mktemp -d)"
@@ -106,7 +102,6 @@ jobs:
             yes "" | ./configure < /dev/null
 
             bazel build -s --verbose_failures \
-              --repository_cache=${BAZEL_CACHE}/repository_cache \
               --config=opt \
               --config=cuda_nvcc \
               --config=cuda_wheel \
