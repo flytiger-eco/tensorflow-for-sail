@@ -22,7 +22,7 @@ jobs:
     container:
       image: ghcr.io/actions/actions-runner:latest
     env:
-      IMAGE: pkg.flytiger-eco.com/docker_release/ppu:v2.1.1-cuda12.8-ubuntu24-py312
+      IMAGE: pkg.flytiger-eco.com/docker_release/ppu:sdk2.2.0-cuda12.8-ubuntu24-py312-20261008
       NAMESPACE: "ppu-sched"
       NODE_SELECTOR: "board-type=ZW-M890P"
       HOST_VOLUMES: "/nas_aisw:/nas_aisw,/wl_nas:/mnt/wl_nas"
