@@ -59,7 +59,6 @@ jobs:
             apt-get update
             apt-get install -y clang-18 lld-18 patchelf wget xxd
             
-            chmod +x /usr/bin/bazel
             PCCL_TMP="$(mktemp -d)"
             wget -q -O "${PCCL_TMP}/pccl.tar.gz" "${PCCL_URL}"
             tar -xzf "${PCCL_TMP}/pccl.tar.gz" -C "${PCCL_TMP}"
