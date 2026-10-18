@@ -56,12 +56,13 @@ jobs:
             chmod 1777 /tmp
             PCCL_URL=https://pkg.flytiger-eco.com/artifactory/generic-local/NCCL/v2.2.0/nccl-2.27.3_ubuntu2404_sdk-v2.2.0.tar.gz
 
+            apt-get update
+            apt-get install -y ca-certificates clang-18 lld-18 patchelf wget xxd
+            update-ca-certificates
+
             wget -O /usr/bin/bazel https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64
             chmod +x /usr/bin/bazel
 
-            apt-get update
-            apt-get install -y clang-18 lld-18 patchelf wget xxd
-            
             PCCL_TMP="$(mktemp -d)"
             wget -q -O "${PCCL_TMP}/pccl.tar.gz" "${PCCL_URL}"
             tar -xzf "${PCCL_TMP}/pccl.tar.gz" -C "${PCCL_TMP}"
