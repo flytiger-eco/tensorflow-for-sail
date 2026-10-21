@@ -5,6 +5,12 @@ load("//third_party:repo.bzl", "tf_http_archive")
 def repo(name):
     """Imports LLVM."""
     LLVM_COMMIT = "909041e4802c4b9a2223ca04099f35bf1dbbd460"
+
+    # The upstream checksum
+    # 3f986184ee126677dbd77edb16d6b82c057ec869fefd7a9871979941e52e837a no
+    # longer matches: mirror.tensorflow.org 404s and the archive GitHub
+    # regenerated for this commit hashes to the value below, which would fail
+    # Bazel's download verification (and repository_cache lookups by SHA256).
     LLVM_SHA256 = "00b1077e029fa57e6f2d9ac24936a49acf23ebc051b04f487131116258be6248"
 
     tf_http_archive(
