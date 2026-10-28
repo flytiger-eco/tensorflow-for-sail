@@ -41,7 +41,7 @@ jobs:
         run: |
           set -ex
 
-      - name: "编译 wheel (890P, 1 PPU)"
+      - name: "编译 wheel 并执行 PR 测试 (890P, 1 PPU)"
         id: build
         uses: flytiger-eco/ppu-distributed-action@main
         with:
@@ -126,40 +126,20 @@ jobs:
               //tensorflow/python/kernel_tests/custom_ops:duplicate_op.so \
               //tensorflow/tools/pip_package:wheel
 
-            # bazel-bin 指向编译容器内的缓存，需把 wheel 拷回工作区供后续步骤上传
-            WHEEL_SRC=""
-            for d in bazel-bin/tensorflow/tools/pip_package/wheel_house \
-                     tensorflow/bazel-bin/tensorflow/tools/pip_package/wheel_house; do
-              if ls "${d}"/tensorflow*.whl >/dev/null 2>&1; then
-                WHEEL_SRC="${d}"
-                break
-              fi
-            done
-            if [ -z "${WHEEL_SRC}" ]; then
-              echo "wheel not found under bazel-bin/tensorflow/tools/pip_package/wheel_house" >&2
+
+            WHEEL_DIR=bazel-bin/tensorflow/tools/pip_package/wheel_house
+            WHEEL="$(ls "${WHEEL_DIR}"/tensorflow*.whl 2>/dev/null | head -n 1)"
+            if [ -z "${WHEEL}" ]; then
+              WHEEL="$(find -L . -name 'tensorflow*.whl' -print -quit 2>/dev/null | head -n 1)"
+            fi
+            if [ -z "${WHEEL}" ]; then
+              echo "wheel not found under ${WHEEL_DIR} or $(pwd)" >&2
               exit 1
             fi
-            rm -rf wheel_out
-            mkdir -p wheel_out
-            cp -L "${WHEEL_SRC}"/tensorflow*.whl wheel_out/
-            ls -l wheel_out
+            ls -l "${WHEEL}"
 
-      - name: "Upload wheel"
-        uses: actions/upload-artifact@v4
-        with:
-          name: wheel
-          path: wheel_out/tensorflow*.whl
-          if-no-files-found: error
+            pip install "${WHEEL}"
+            # 仓库根目录下有同名 tensorflow 源码包，需离开源码树再校验安装结果
+            (cd /tmp && python -c "import tensorflow as tf; print(tf.__version__)")
 
-      - name: "Download wheel"
-        uses: actions/download-artifact@v4
-        with:
-          name: wheel
-          path: /tmp/wheel
-
-      - name: "Test case"
-        run: |
-          set -ex
-          pip install /tmp/wheel/tensorflow*.whl
-          python -c "import tensorflow as tf; print(tf.__version__)"
-          bash ci/sail/run_pr_tests.sh --run
+            bash ci/sail/run_pr_tests.sh --run
