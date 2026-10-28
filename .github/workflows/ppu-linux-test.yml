@@ -1,12 +1,12 @@
 name: PPU Linux Test
 
 on:
-  # pull_request:
-  #   branches:
-  #     - v2.21.0
-  # push:
-  #   branches:
-  #     - v2.21.0
+  pull_request:
+    branches:
+      - v2.21.0
+  push:
+    branches:
+      - v2.21.0
   schedule:
     - cron: "0 10 * * 5"
 
@@ -125,6 +125,7 @@ jobs:
               //tensorflow/python/kernel_tests/custom_ops:ackermann_op.so \
               //tensorflow/python/kernel_tests/custom_ops:duplicate_op.so \
               //tensorflow/tools/pip_package:wheel
+
       - name: "Upload wheel"
         uses: actions/upload-artifact@v3
         with:
@@ -142,4 +143,4 @@ jobs:
           set -ex
           pip install /tmp/wheel/tensorflow*.whl
           python -c "import tensorflow as tf; print(tf.__version__)"
-          bash run_test.sh
+          bash ci/sail/run_pr_tests.sh --run
