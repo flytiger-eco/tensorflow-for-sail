@@ -1,12 +1,12 @@
 name: PPU Linux Build
 
 on:
-  # pull_request:
-  #   branches:
-  #     - v2.21.0
-  # push:
-  #   branches:
-  #     - v2.21.0
+  pull_request:
+    branches:
+      - v2.21.0
+  push:
+    branches:
+      - v2.21.0
 
 permissions:
   contents: read
