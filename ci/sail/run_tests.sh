@@ -104,8 +104,11 @@ fi
 
 # Preserve pycpp.sh build options; replace only the broad test suite with filters and external lists.
 read -r -a platform_options <<< "${SAIL_BAZEL_PLATFORM_ARGS---@local_config_cuda//cuda:override_include_cuda_libs=true --config=hermetic_cuda_umd}"
-test_options=(
-  "${platform_options[@]}"
+test_options=()
+if [[ ${#platform_options[@]} -gt 0 ]]; then
+  test_options+=("${platform_options[@]}")
+fi
+test_options+=(
   "--config=${prefix}_pycpp_test_filters"
   --test_sharding_strategy=disabled
   --runs_per_test=1
@@ -131,6 +134,11 @@ if [[ "$mode" == --dry-run ]]; then
 fi
 
 cd "$repo_root"
+# setup.sh resolves TFCI_OUTPUT_DIR with realpath before creating it, which only tolerates
+# a missing final component; the nested per-profile directories must exist beforehand.
+if [[ -n "${TFCI_OUTPUT_DIR:-}" ]]; then
+  mkdir -p "$TFCI_OUTPUT_DIR"
+fi
 source "$repo_root/ci/official/utilities/setup.sh"
 if [[ "$TFCI_BAZEL_TARGET_SELECTING_CONFIG_PREFIX" != "$prefix" ]]; then
   printf 'TFCI selected %s, which does not match --profile %s\n' \

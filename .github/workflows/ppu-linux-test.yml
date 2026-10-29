@@ -1,12 +1,12 @@
 name: PPU Linux Test
 
 on:
-  # pull_request:
-  #   branches:
-  #     - v2.21.0
-  # push:
-  #   branches:
-  #     - v2.21.0
+  pull_request:
+    branches:
+      - v2.21.0
+  push:
+    branches:
+      - v2.21.0
   schedule:
     - cron: "0 10 * * 5"
 
@@ -41,7 +41,7 @@ jobs:
         run: |
           set -ex
 
-      - name: "编译 wheel (890P, 1 PPU)"
+      - name: "编译 wheel 并执行 PR 测试 (890P, 1 PPU)"
         id: build
         uses: flytiger-eco/ppu-distributed-action@main
         with:
@@ -125,21 +125,21 @@ jobs:
               //tensorflow/python/kernel_tests/custom_ops:ackermann_op.so \
               //tensorflow/python/kernel_tests/custom_ops:duplicate_op.so \
               //tensorflow/tools/pip_package:wheel
-      - name: "Upload wheel"
-        uses: actions/upload-artifact@v3
-        with:
-          name: wheel
-          path: /tmp/tensorflow/tools/pip_package/wheelhouse/tensorflow*.whl
 
-      - name: "Download wheel"
-        uses: actions/download-artifact@v3
-        with:
-          name: wheel
-          path: /tmp/wheel
 
-      - name: "Test case"
-        run: |
-          set -ex
-          pip install /tmp/wheel/tensorflow*.whl
-          python -c "import tensorflow as tf; print(tf.__version__)"
-          bash run_test.sh
+            WHEEL_DIR=bazel-bin/tensorflow/tools/pip_package/wheel_house
+            WHEEL="$(ls "${WHEEL_DIR}"/tensorflow*.whl 2>/dev/null | head -n 1)"
+            if [ -z "${WHEEL}" ]; then
+              WHEEL="$(find -L . -name 'tensorflow*.whl' -print -quit 2>/dev/null | head -n 1)"
+            fi
+            if [ -z "${WHEEL}" ]; then
+              echo "wheel not found under ${WHEEL_DIR} or $(pwd)" >&2
+              exit 1
+            fi
+            ls -l "${WHEEL}"
+
+            pip install "${WHEEL}"
+            # 仓库根目录下有同名 tensorflow 源码包，需离开源码树再校验安装结果
+            (cd /tmp && python -c "import tensorflow as tf; print(tf.__version__)")
+
+            bash ci/sail/run_pr_tests.sh --run

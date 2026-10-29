@@ -5,7 +5,7 @@ set -euo pipefail
 
 usage() {
   cat <<'HELP'
-Usage: bash ci/sail_final/run_pr_tests.sh [--dry-run|--run]
+Usage: bash ci/sail/run_pr_tests.sh [--dry-run|--run]
 
 Select pr_targets.list and run CPU, then CUDA, using run_tests.sh.
 No argument or --dry-run previews commands without starting builds/tests.
@@ -41,7 +41,10 @@ export SAIL_ENV_FILE="${SAIL_ENV_FILE-$script_dir/ppu_env.sh}"
 unset SAIL_ONLY_TARGET SAIL_TARGETS_FILE
 
 if [[ "$mode" == --run ]]; then
-  output_base="$(realpath -m "${SAIL_OUTPUT_ROOT:-$repo_root/build_output/sail_final}")"
+  # realpath -m is GNU-only, so create the base directory first and then resolve it.
+  output_base="${SAIL_OUTPUT_ROOT:-$repo_root/build_output/sail_final}"
+  mkdir -p "$output_base"
+  output_base="$(realpath "$output_base")"
   job_dir="$output_base/pr_$(date +%Y%m%d-%H%M%S)-$$"
   printf 'PR results root: %s\n' "$job_dir"
 else
